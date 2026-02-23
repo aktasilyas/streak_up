@@ -148,6 +148,19 @@ class AppStrings {
   static const String statsPeriodYear = 'Bu Yıl';
   static const String statsPeriodAll = 'Tümü';
 
+  static const String statsMotivationExcellent = 'Harika gidiyorsun! 🎉';
+  static const String statsMotivationGood = 'İyi ilerleme kaydediyorsun! 💪';
+  static const String statsMotivationNeedsWork = 'Biraz daha gayret! 🔥';
+  static const String statsMotivationKeepGoing = 'Devam et, başarabilirsin! ⭐';
+
+  static const String statsSelectHabit = 'Alışkanlık Seç';
+  static const String statsAllHabits = 'Tüm Alışkanlıklar';
+  static const String statsNoData = 'Henüz veri yok';
+  static const String statsCompletedTasks = 'Tamamlanan Görev';
+  static const String statsActiveStreakLabel = 'Aktif Streak';
+  static const String statsTotalDaysLabel = 'Toplam Gün';
+  static const String statsThisWeekLabel = 'Bu Hafta';
+
   // ============================================================================
   // SETTINGS SCREEN
   // ============================================================================

@@ -4,6 +4,7 @@ import 'package:streak_up/core/constants/app_dimensions.dart';
 import 'package:streak_up/core/constants/app_strings.dart';
 import 'package:streak_up/core/extensions/context_extensions.dart';
 import 'package:streak_up/core/widgets/app_scaffold.dart';
+import 'package:streak_up/core/widgets/banner_ad_widget.dart';
 import 'package:streak_up/core/widgets/empty_state_widget.dart';
 import 'package:streak_up/core/widgets/loading_widget.dart';
 import 'package:streak_up/core/widgets/responsive_builder.dart';
@@ -51,6 +52,7 @@ class HabitListScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       showBannerAd: true,
+      bannerAdWidget: const BannerAdWidget(),
     );
   }
 

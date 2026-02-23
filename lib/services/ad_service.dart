@@ -6,101 +6,75 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// AdMob reklam servisi — Singleton pattern
 ///
-/// Banner, interstitial ve rewarded video reklamlarını yönetir.
-/// Debug modda test ID'leri, release modda gerçek ID'leri kullanır.
-/// Reklam yüklenemezse UI bozulmaz (graceful degradation).
+/// Banner, interstitial ve rewarded video reklamlarini yonetir.
+/// Debug modda test ID'leri, release modda gercek ID'leri kullanir.
+/// Reklam yuklenemezse UI bozulmaz (graceful degradation).
 class AdService {
   AdService._internal();
 
   /// Singleton instance
   static final AdService instance = AdService._internal();
 
-  /// Factory constructor — her zaman aynı instance'ı döner
+  /// Factory constructor — her zaman ayni instance'i doner
   factory AdService() => instance;
 
-  /// SDK başlatıldı mı kontrolü
+  /// SDK baslatildi mi?
   bool _isInitialized = false;
 
-  /// Son interstitial gösterim zamanı (120s cooldown)
+  /// Son interstitial gosterim zamani (120s cooldown)
   DateTime? _lastInterstitialShowTime;
 
-  /// Interstitial gösterimleri arası minimum süre (saniye)
+  /// Interstitial gosterimleri arasi minimum sure (saniye)
   static const int _interstitialCooldownSeconds = 120;
 
-  /// Yüklü interstitial reklam
+  /// Yuklu interstitial reklam
   InterstitialAd? _interstitialAd;
 
-  /// Yüklü rewarded reklam
+  /// Yuklu rewarded reklam
   RewardedAd? _rewardedAd;
 
-  // ==========================================================================
-  // REKLAM ID'LERİ
-  // ==========================================================================
+  /// SDK baslatildi mi kontrolu
+  bool get isInitialized => _isInitialized;
+
+  // --- Reklam ID'leri (kDebugMode -> test, release -> production) ---
 
   /// Banner reklam ID'si
-  ///
-  /// kDebugMode'da test ID kullanır, production'da gerçek ID
   static String get bannerAdUnitId {
-    if (kDebugMode) {
-      return _testBannerAdUnitId;
-    }
+    if (kDebugMode) return _testBannerAdUnitId;
     // TODO: Production banner ad unit ID eklenecek
     return _testBannerAdUnitId;
   }
 
   /// Interstitial reklam ID'si
   static String get interstitialAdUnitId {
-    if (kDebugMode) {
-      return _testInterstitialAdUnitId;
-    }
+    if (kDebugMode) return _testInterstitialAdUnitId;
     // TODO: Production interstitial ad unit ID eklenecek
     return _testInterstitialAdUnitId;
   }
 
   /// Rewarded video reklam ID'si
   static String get rewardedAdUnitId {
-    if (kDebugMode) {
-      return _testRewardedAdUnitId;
-    }
+    if (kDebugMode) return _testRewardedAdUnitId;
     // TODO: Production rewarded ad unit ID eklenecek
     return _testRewardedAdUnitId;
   }
 
-  // ==========================================================================
-  // TEST AD UNIT ID'LERİ (Google tarafından sağlanan)
-  // ==========================================================================
+  // Google tarafindan saglanan test ad unit ID'leri
+  static String get _testBannerAdUnitId => Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/6300978111'
+      : 'ca-app-pub-3940256099942544/2934735716';
 
-  static String get _testBannerAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111';
-    }
-    // iOS
-    return 'ca-app-pub-3940256099942544/2934735716';
-  }
+  static String get _testInterstitialAdUnitId => Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/1033173712'
+      : 'ca-app-pub-3940256099942544/4411468910';
 
-  static String get _testInterstitialAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712';
-    }
-    // iOS
-    return 'ca-app-pub-3940256099942544/4411468910';
-  }
+  static String get _testRewardedAdUnitId => Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/5224354917'
+      : 'ca-app-pub-3940256099942544/1712485313';
 
-  static String get _testRewardedAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/5224354917';
-    }
-    // iOS
-    return 'ca-app-pub-3940256099942544/1712485313';
-  }
-
-  // ==========================================================================
-  // YAŞAM DÖNGÜSÜ
-  // ==========================================================================
-
-  /// AdMob SDK'yı başlatır
+  /// AdMob SDK'yi baslatir
   ///
-  /// Uygulama başlangıcında main() içinde çağrılmalı.
+  /// Uygulama basinda main() icinde cagrilmali.
   /// Hata durumunda sessizce devam eder (graceful degradation).
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -108,45 +82,37 @@ class AdService {
     try {
       await MobileAds.instance.initialize();
       _isInitialized = true;
-      debugPrint('AdService: SDK başarıyla başlatıldı');
+      debugPrint('AdService: SDK basariyla baslatildi');
     } on Exception catch (e) {
-      debugPrint('AdService: SDK başlatma hatası → $e');
-      // Graceful degradation — reklam gösterilmez ama uygulama çalışır
+      debugPrint('AdService: SDK baslatma hatasi -> $e');
     }
   }
 
-  /// SDK'nın başlatılıp başlatılmadığını kontrol eder
-  bool get isInitialized => _isInitialized;
-
-  // ==========================================================================
-  // BANNER REKLAM
-  // ==========================================================================
-
-  /// Yeni bir banner reklam oluşturur
+  /// Yeni bir banner reklam olusturur ve yuklemeye hazirlar
   ///
-  /// Widget ağacında kullanmak üzere [BannerAd] döner.
-  /// Yükleme başarısız olursa null döner.
-  BannerAd? createBannerAd({
-    AdSize size = AdSize.banner,
+  /// Widget agacinda kullanmak uzere `BannerAd` doner.
+  /// SDK baslatilmamissa null doner.
+  BannerAd? loadBannerAd({
+    AdSize adSize = AdSize.banner,
     void Function(Ad)? onAdLoaded,
     void Function(Ad, LoadAdError)? onAdFailedToLoad,
   }) {
     if (!_isInitialized) {
-      debugPrint('AdService: SDK başlatılmadı, banner oluşturulamıyor');
+      debugPrint('AdService: SDK baslatilmadi, banner olusturulamiyor');
       return null;
     }
 
     return BannerAd(
       adUnitId: bannerAdUnitId,
-      size: size,
+      size: adSize,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          debugPrint('AdService: Banner yüklendi');
+          debugPrint('AdService: Banner yuklendi');
           onAdLoaded?.call(ad);
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('AdService: Banner yüklenemedi → $error');
+          debugPrint('AdService: Banner yuklenemedi -> $error');
           ad.dispose();
           onAdFailedToLoad?.call(ad, error);
         },
@@ -154,30 +120,23 @@ class AdService {
     );
   }
 
-  // ==========================================================================
-  // INTERSTITIAL REKLAM
-  // ==========================================================================
-
-  /// Interstitial reklamı önceden yükler
+  /// Interstitial reklami onceden yukler
   ///
-  /// Gösterim anında gecikme olmaması için önceden yüklenir.
-  Future<void> loadInterstitialAd() async {
-    if (!_isInitialized) return;
-
-    // Zaten yüklü bir reklam varsa tekrar yükleme
-    if (_interstitialAd != null) return;
+  /// Gosterim aninda gecikme olmamasi icin onceden yuklenir.
+  Future<void> loadInterstitial() async {
+    if (!_isInitialized || _interstitialAd != null) return;
 
     await InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('AdService: Interstitial yüklendi');
+          debugPrint('AdService: Interstitial yuklendi');
           _interstitialAd = ad;
           _setupInterstitialCallbacks(ad);
         },
         onAdFailedToLoad: (error) {
-          debugPrint('AdService: Interstitial yüklenemedi → $error');
+          debugPrint('AdService: Interstitial yuklenemedi -> $error');
           _interstitialAd = null;
         },
       ),
@@ -188,38 +147,31 @@ class AdService {
   void _setupInterstitialCallbacks(InterstitialAd ad) {
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
-        debugPrint('AdService: Interstitial kapatıldı');
         ad.dispose();
         _interstitialAd = null;
-        // Bir sonraki gösterim için önceden yükle
-        loadInterstitialAd();
+        loadInterstitial();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
-        debugPrint('AdService: Interstitial gösterilemedi → $error');
+        debugPrint('AdService: Interstitial gosterilemedi -> $error');
         ad.dispose();
         _interstitialAd = null;
       },
     );
   }
 
-  /// Interstitial reklamı gösterir
+  /// Interstitial reklami gosterir (120s cooldown kontrolu)
   ///
-  /// Cooldown süresi dolmadıysa veya reklam yüklenmediyse false döner.
-  /// Başarıyla gösterildiyse true döner.
-  Future<bool> showInterstitialAd() async {
-    if (!_isInitialized) return false;
-
-    // 120 saniye cooldown kontrolü
-    if (!_isInterstitialCooldownExpired) {
-      debugPrint('AdService: Interstitial cooldown aktif, gösterilemiyor');
+  /// Cooldown dolmadiysa veya reklam yuklenmediyse false doner.
+  Future<bool> showInterstitial() async {
+    if (!_isInitialized || !_isInterstitialCooldownExpired) {
+      debugPrint('AdService: Interstitial gosterilemiyor (cooldown/init)');
       return false;
     }
 
     final ad = _interstitialAd;
     if (ad == null) {
-      debugPrint('AdService: Interstitial yüklenmemiş');
-      // Bir sonraki sefer için yüklemeye başla
-      await loadInterstitialAd();
+      debugPrint('AdService: Interstitial yuklenmemis, yukleniyor...');
+      await loadInterstitial();
       return false;
     }
 
@@ -229,54 +181,46 @@ class AdService {
     return true;
   }
 
-  /// Interstitial cooldown süresinin dolup dolmadığını kontrol eder
+  /// Cooldown suresinin dolup dolmadigini kontrol eder
   bool get _isInterstitialCooldownExpired {
     final lastShow = _lastInterstitialShowTime;
     if (lastShow == null) return true;
-
-    final elapsed = DateTime.now().difference(lastShow).inSeconds;
-    return elapsed >= _interstitialCooldownSeconds;
+    return DateTime.now().difference(lastShow).inSeconds >=
+        _interstitialCooldownSeconds;
   }
 
-  // ==========================================================================
-  // REWARDED VIDEO REKLAM
-  // ==========================================================================
-
-  /// Rewarded video reklamı önceden yükler
-  Future<void> loadRewardedAd() async {
-    if (!_isInitialized) return;
-
-    // Zaten yüklü bir reklam varsa tekrar yükleme
-    if (_rewardedAd != null) return;
+  /// Rewarded video reklami onceden yukler
+  Future<void> loadRewarded() async {
+    if (!_isInitialized || _rewardedAd != null) return;
 
     await RewardedAd.load(
       adUnitId: rewardedAdUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('AdService: Rewarded video yüklendi');
+          debugPrint('AdService: Rewarded video yuklendi');
           _rewardedAd = ad;
         },
         onAdFailedToLoad: (error) {
-          debugPrint('AdService: Rewarded video yüklenemedi → $error');
+          debugPrint('AdService: Rewarded video yuklenemedi -> $error');
           _rewardedAd = null;
         },
       ),
     );
   }
 
-  /// Rewarded video gösterir ve ödül kazanılıp kazanılmadığını döner
+  /// Rewarded video gosterir ve odul kazanilip kazanilmadigini doner
   ///
-  /// Kullanıcı videoyu sonuna kadar izlerse true döner.
-  /// Reklam yüklenemezse veya kullanıcı kapattıysa false döner.
-  /// Streak kurtarma gibi ödüllü işlemler için kullanılır.
-  Future<bool> showRewardedAd() async {
+  /// Kullanici videoyu sonuna kadar izlerse true doner.
+  /// Reklam yuklenemezse veya kullanici erken kapattiysa false doner.
+  /// Streak kurtarma gibi odullu islemler icin kullanilir.
+  Future<bool> showRewarded() async {
     if (!_isInitialized) return false;
 
     final ad = _rewardedAd;
     if (ad == null) {
-      debugPrint('AdService: Rewarded video yüklenmemiş');
-      await loadRewardedAd();
+      debugPrint('AdService: Rewarded video yuklenmemis');
+      await loadRewarded();
       return false;
     }
 
@@ -284,55 +228,39 @@ class AdService {
 
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
-        debugPrint('AdService: Rewarded video kapatıldı');
         ad.dispose();
         _rewardedAd = null;
-        // Ödül callback'i çalışmadıysa false döner
-        if (!completer.isCompleted) {
-          completer.complete(false);
-        }
-        // Bir sonraki gösterim için önceden yükle
-        loadRewardedAd();
+        if (!completer.isCompleted) completer.complete(false);
+        loadRewarded();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
-        debugPrint('AdService: Rewarded video gösterilemedi → $error');
+        debugPrint('AdService: Rewarded gosterilemedi -> $error');
         ad.dispose();
         _rewardedAd = null;
-        if (!completer.isCompleted) {
-          completer.complete(false);
-        }
+        if (!completer.isCompleted) completer.complete(false);
       },
     );
 
     await ad.show(
       onUserEarnedReward: (_, reward) {
         debugPrint(
-          'AdService: Ödül kazanıldı → '
-          '${reward.amount} ${reward.type}',
+          'AdService: Odul kazanildi -> ${reward.amount} ${reward.type}',
         );
-        if (!completer.isCompleted) {
-          completer.complete(true);
-        }
+        if (!completer.isCompleted) completer.complete(true);
       },
     );
 
     return completer.future;
   }
 
-  // ==========================================================================
-  // TEMİZLİK
-  // ==========================================================================
-
-  /// Yüklü reklamları temizler
+  /// Tum yuklu reklamlari temizler
   ///
-  /// Uygulama kapanırken çağrılmalı
-  void dispose() {
+  /// Uygulama kapanirken cagrilmali
+  void disposeAll() {
     _interstitialAd?.dispose();
     _interstitialAd = null;
-
     _rewardedAd?.dispose();
     _rewardedAd = null;
-
-    debugPrint('AdService: Tüm reklamlar temizlendi');
+    debugPrint('AdService: Tum reklamlar temizlendi');
   }
 }

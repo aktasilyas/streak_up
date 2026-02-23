@@ -55,6 +55,12 @@ dependencies:
   # Routing
   go_router: ^14.8.1
 
+  # Key-Value saklama (reklam sayaci vb.)
+  shared_preferences: ^2.3.4
+
+  # Charts
+  fl_chart: ^0.69.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

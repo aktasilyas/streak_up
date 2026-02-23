@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:streak_up/core/constants/app_strings.dart';
+import 'package:streak_up/features/habits/presentation/screens/habit_list_screen.dart';
+import 'package:streak_up/features/statistics/presentation/screens/stats_screen.dart';
 
 /// Uygulama yönlendirme tanımları — GoRouter
 ///
@@ -28,13 +30,13 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.habits,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: _PlaceholderScreen(title: AppStrings.navHabits),
+              child: HabitListScreen(),
             ),
           ),
           GoRoute(
             path: AppRoutes.stats,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: _PlaceholderScreen(title: AppStrings.navStatistics),
+              child: StatsScreen(),
             ),
           ),
           GoRoute(
