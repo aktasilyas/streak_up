@@ -49,6 +49,12 @@ dependencies:
   # Immutable sınıflar (Freezed annotation)
   freezed_annotation: ^2.4.4
 
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.8.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
