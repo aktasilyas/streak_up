@@ -46,6 +46,9 @@ dependencies:
   # Bildirimler
   flutter_local_notifications: ^18.0.1
 
+  # Immutable sınıflar (Freezed annotation)
+  freezed_annotation: ^2.4.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -56,6 +59,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Kod üretimi (Freezed)
+  freezed: ^2.5.7
+  build_runner: ^2.4.14
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
