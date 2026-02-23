@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:streak_up/core/constants/app_strings.dart';
 import 'package:streak_up/features/habits/presentation/screens/habit_list_screen.dart';
+import 'package:streak_up/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:streak_up/features/settings/presentation/screens/settings_screen.dart';
 import 'package:streak_up/features/statistics/presentation/screens/stats_screen.dart';
 
 /// Uygulama yönlendirme tanımları — GoRouter
@@ -15,11 +18,41 @@ class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+  /// Onboarding tamamlanma key'i
+  static const String _keyOnboardingCompleted = 'onboarding_completed';
+
   /// GoRouter instance'ı
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: AppRoutes.habits,
+    initialLocation: AppRoutes.onboarding,
+    redirect: (context, state) async {
+      // Onboarding tamamlanmış mı kontrol et
+      final prefs = await SharedPreferences.getInstance();
+      final isOnboardingCompleted =
+          prefs.getBool(_keyOnboardingCompleted) ?? false;
+      final isOnOnboardingPage = state.uri.path == AppRoutes.onboarding;
+
+      // Onboarding tamamlanmışsa ve onboarding sayfasındaysa ana sayfaya yönlendir
+      if (isOnboardingCompleted && isOnOnboardingPage) {
+        return AppRoutes.habits;
+      }
+
+      // Onboarding tamamlanmamışsa ve başka bir sayfadaysa onboarding'e yönlendir
+      if (!isOnboardingCompleted && !isOnOnboardingPage) {
+        return AppRoutes.onboarding;
+      }
+
+      return null; // Yönlendirme yapma
+    },
     routes: [
+      // Onboarding — ilk kullanım ekranı
+      GoRoute(
+        path: AppRoutes.onboarding,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: OnboardingScreen(),
+        ),
+      ),
       // Ana ekranlar — Bottom navigation ile
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -42,7 +75,7 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.settings,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: _PlaceholderScreen(title: AppStrings.navSettings),
+              child: SettingsScreen(),
             ),
           ),
         ],
@@ -75,6 +108,9 @@ class AppRouter {
 /// Hardcoded string kullanımını önler
 class AppRoutes {
   AppRoutes._();
+
+  /// Onboarding — ilk kullanım
+  static const String onboarding = '/onboarding';
 
   /// Ana sayfa — Alışkanlık listesi
   static const String habits = '/';

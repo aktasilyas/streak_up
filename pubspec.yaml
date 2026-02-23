@@ -46,6 +46,9 @@ dependencies:
   # Bildirimler
   flutter_local_notifications: ^18.0.1
 
+  # Zaman dilimi (zonedSchedule için)
+  timezone: ^0.9.4
+
   # Immutable sınıflar (Freezed annotation)
   freezed_annotation: ^2.4.4
 
@@ -57,6 +60,12 @@ dependencies:
 
   # Key-Value saklama (reklam sayaci vb.)
   shared_preferences: ^2.3.4
+
+  # Uygulama bilgisi (versiyon vb.)
+  package_info_plus: ^8.1.2
+
+  # URL açma (gizlilik politikası vb.)
+  url_launcher: ^6.3.1
 
   # Charts
   fl_chart: ^0.69.2

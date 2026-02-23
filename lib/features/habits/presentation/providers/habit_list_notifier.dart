@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:streak_up/features/habits/domain/entities/habit_with_stats.dart';
 import 'package:streak_up/features/habits/presentation/providers/habit_providers.dart';
+import 'package:streak_up/services/notification_service.dart';
 
 /// Alışkanlık listesi state provider'ı
 ///
@@ -57,6 +58,10 @@ class HabitListNotifier extends AsyncNotifier<List<HabitWithStats>> {
     try {
       final deleteUseCase = ref.read(deleteHabitProvider);
       await deleteUseCase(id);
+
+      // Silinen alışkanlığın bildirimini iptal et
+      await NotificationService.instance.cancel(id);
+
       await refresh();
     } on Exception catch (e, st) {
       debugPrint('HabitListNotifier: Silme hatası → $e');

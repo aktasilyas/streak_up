@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:streak_up/features/habits/domain/entities/habit.dart';
 import 'package:streak_up/features/habits/domain/enums/habit_frequency.dart';
 import 'package:streak_up/features/habits/presentation/providers/habit_providers.dart';
+import 'package:streak_up/services/notification_service.dart';
 
 /// Form state provider'ı
 ///
@@ -182,7 +183,7 @@ class HabitFormNotifier extends AutoDisposeNotifier<HabitFormState> {
       final createUseCase = ref.read(createHabitProvider);
       final now = DateTime.now();
 
-      await createUseCase(Habit(
+      final createdHabit = await createUseCase(Habit(
         name: state.name.trim(),
         description: state.description.trim().isEmpty
             ? null
@@ -197,6 +198,13 @@ class HabitFormNotifier extends AutoDisposeNotifier<HabitFormState> {
         createdAt: now,
         updatedAt: now,
       ));
+
+      // Hatırlatıcı varsa bildirim planla
+      await _scheduleNotificationIfNeeded(
+        habitId: createdHabit.id,
+        habitName: createdHabit.name,
+        reminderTime: createdHabit.reminderTime,
+      );
 
       return true;
     } on ArgumentError catch (e) {
@@ -248,6 +256,14 @@ class HabitFormNotifier extends AutoDisposeNotifier<HabitFormState> {
         updatedAt: now,
       ));
 
+      // Eski bildirimi iptal et, yeni hatırlatıcı varsa tekrar planla
+      await NotificationService.instance.cancel(id);
+      await _scheduleNotificationIfNeeded(
+        habitId: id,
+        habitName: state.name.trim(),
+        reminderTime: state.reminderTime,
+      );
+
       return true;
     } on ArgumentError catch (e) {
       state = state.copyWith(
@@ -263,5 +279,38 @@ class HabitFormNotifier extends AutoDisposeNotifier<HabitFormState> {
       );
       return false;
     }
+  }
+
+  // ===========================================================================
+  // BİLDİRİM YARDIMCISI
+  // ===========================================================================
+
+  /// Hatırlatıcı saati varsa günlük bildirim planlar
+  ///
+  /// [habitId] — Bildirim ID'si olarak kullanılır
+  /// [habitName] — Bildirim başlığında gösterilir
+  /// [reminderTime] — "HH:mm" formatında saat (null ise bildirim planlanmaz)
+  Future<void> _scheduleNotificationIfNeeded({
+    required int? habitId,
+    required String habitName,
+    required String? reminderTime,
+  }) async {
+    if (habitId == null || reminderTime == null) return;
+
+    final parts = reminderTime.split(':');
+    if (parts.length != 2) return;
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return;
+
+    await NotificationService.instance.scheduleDaily(
+      id: habitId,
+      title: 'Alışkanlık Zamanı!',
+      body: '$habitName için seni bekliyoruz! 💪',
+      hour: hour,
+      minute: minute,
+      payload: 'habit_$habitId',
+    );
   }
 }

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:streak_up/core/constants/app_strings.dart';
 import 'package:streak_up/core/theme/app_theme.dart';
+import 'package:streak_up/features/settings/presentation/providers/settings_provider.dart';
 import 'package:streak_up/router/app_router.dart';
 import 'package:streak_up/services/ad_service.dart';
+import 'package:streak_up/services/analytics_service.dart';
 import 'package:streak_up/services/database_service.dart';
+import 'package:streak_up/services/notification_service.dart';
 
 /// Uygulama giriş noktası
 ///
@@ -16,6 +19,8 @@ void main() async {
   await Future.wait([
     DatabaseService.instance.database,
     AdService.instance.initialize(),
+    NotificationService.instance.initialize(),
+    AnalyticsService.instance.initialize(),
   ]);
 
   runApp(
@@ -28,12 +33,17 @@ void main() async {
 /// StreakUp ana uygulama widget'ı
 ///
 /// Material 3 tema ve GoRouter ile yapılandırılmış.
-/// Light/Dark tema desteği — sistem temasını takip eder.
-class StreakUpApp extends StatelessWidget {
+/// Light/Dark tema desteği — settingsProvider'dan okunur.
+class StreakUpApp extends ConsumerWidget {
   const StreakUpApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Tema modunu settings provider'dan dinle
+    final themeMode = ref.watch(
+      settingsProvider.select((s) => s.themeMode),
+    );
+
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
@@ -41,7 +51,7 @@ class StreakUpApp extends StatelessWidget {
       // Tema
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
 
       // Router
       routerConfig: AppRouter.router,
